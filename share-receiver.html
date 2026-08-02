@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>正在接收分享...</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f3f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;text-align:center;color:#2c241b;}
+.card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);max-width:320px;}
+.icon{font-size:48px;margin-bottom:12px;}
+h2{font-size:18px;margin:0 0 8px;}
+p{font-size:14px;color:#7a6e62;margin:0 0 16px;line-height:1.6;}
+.loading{animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">📥</div>
+  <h2>正在接收分享...</h2>
+  <p class="loading">链接正在处理中，即将跳转</p>
+</div>
+<script>
+// 页面加载后，检查是否有 POST 数据
+// 如果有，通过 localStorage 传递
+// 如果没有，直接跳转
+try {
+  // 尝试读取 POST 数据（通过 document.body.textContent 或 URL params）
+  const params = new URLSearchParams(window.location.search);
+  let sharedUrl = params.get('url') || params.get('text') || '';
+
+  if (sharedUrl) {
+    // 保存到临时存储
+    const existing = JSON.parse(localStorage.getItem('aiStudioInbox') || '[]');
+    const item = {
+      id: Date.now(),
+      url: sharedUrl,
+      title: '来自手机分享',
+      platform: 'unknown',
+      addedAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    // 简单平台检测
+    if (sharedUrl.includes('bilibili.com')) item.platform = 'bilibili';
+    else if (sharedUrl.includes('douyin.com')) item.platform = 'douyin';
+    else if (sharedUrl.includes('xiaohongshu.com') || sharedUrl.includes('xhslink.com')) item.platform = 'xiaohongshu';
+    else if (sharedUrl.includes('youtube.com') || sharedUrl.includes('youtu.be')) item.platform = 'youtube';
+
+    existing.unshift(item);
+    localStorage.setItem('aiStudioInbox', JSON.stringify(existing));
+  }
+} catch(e) {}
+
+// 跳转到主页面
+setTimeout(() => { window.location.href = 'index.html'; }, 800);
+</script>
+</body>
+</html>

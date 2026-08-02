@@ -1,0 +1,873 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#8b5e3c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
+<title>AI Creator Studio</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f5f3f0;--surface:#fff;--surface2:#f0ede8;--primary:#8b5e3c;--primary-l:#c49a7a;--primary-bg:#f5ede6;--accent:#2d7a6b;--accent-bg:#e8f3f0;--text:#2c241b;--text2:#7a6e62;--text3:#b0a69c;--border:#e8e2da;--shadow:0 2px 12px rgba(0,0,0,0.06);--radius:16px;--radius-sm:10px;--nav-h:64px;--hdr-h:56px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;overflow:hidden}
+.hdr{height:var(--hdr-h);padding:0 16px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;color:var(--primary)}
+.logo svg{width:26px;height:26px}
+.hdr-actions{display:flex;align-items:center;gap:10px}
+.search{border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;background:var(--bg);outline:none;width:160px;transition:.2s;color:var(--text)}
+.search:focus{border-color:var(--primary-l);width:200px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 80px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.main::-webkit-scrollbar{width:3px}
+.main::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
+.tab{display:none;animation:fadeUp .3s ease}
+.tab.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-it{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:4px 10px;border:none;background:none;color:var(--text3);font-size:10px;transition:.2s;position:relative;min-width:56px}
+.nav-it svg{width:22px;height:22px;transition:.2s}
+.nav-it.active{color:var(--primary)}
+.nav-it.active svg{color:var(--primary)}
+.nav-it:hover{color:var(--text2)}
+.nav-badge{position:absolute;top:-2px;right:4px;background:#e74c3c;color:#fff;font-size:9px;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;font-weight:600}
+
+.sec{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec .more{margin-left:auto;font-size:12px;font-weight:400;color:var(--text2);cursor:pointer}
+.card{background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:10px;transition:.2s}
+.card:active{transform:scale(0.995)}
+.fb{display:flex;align-items:center;justify-content:space-between}
+.row{display:flex;gap:10px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:16px;font-size:11px;background:var(--surface2);color:var(--text2)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 18px;border-radius:20px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:.2s}
+.btn-p{background:var(--primary);color:#fff}
+.btn-p:hover{background:#7a4e2e}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-o:hover{background:var(--surface2)}
+.btn-a{background:var(--accent);color:#fff}
+.btn-a:hover{background:#23685a}
+.btn-s{padding:4px 12px;font-size:12px}
+.btn-d{background:#e8e8e8;color:var(--text3);cursor:not-allowed}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:var(--primary-bg);color:var(--primary)}
+.tag-a{background:var(--accent-bg);color:var(--accent)}
+.tag-r{background:#fff0f0;color:#d44}
+.tag-b{background:#e8f4f8;color:#1a8a9a}
+.tag-v{background:#f0eef8;color:#6a5acd}
+.tag-g{background:#e8f5e8;color:#2a8a4a}
+.tag-y{background:#fdf6ec;color:#b8860b}
+.tag-grey{background:var(--surface2);color:var(--text3)}
+.bar{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:6px}
+.fill{height:100%;border-radius:2px;background:var(--primary);transition:width .6s}
+.fill.a{background:var(--accent)}
+.dv{height:1px;background:var(--border);margin:10px 0}
+.mt-8{margin-top:8px}
+.mt-12{margin-top:12px}
+.gap-6{gap:6px}
+.f1{flex:1}
+.tc{text-align:center}
+
+/* Workflow stages */
+.wf{display:flex;flex-direction:column;gap:8px}
+.wf-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);transition:.2s;cursor:pointer}
+.wf-item:active{transform:scale(0.995)}
+.wf-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px}
+.wf-num.done{background:var(--accent-bg);color:var(--accent)}
+.wf-num.active{background:var(--primary-bg);color:var(--primary)}
+.wf-num.pending{background:var(--surface2);color:var(--text3)}
+.wf-info{flex:1;min-width:0}
+.wf-info .wf-title{font-size:13px;font-weight:500}
+.wf-info .wf-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.wf-status{font-size:10px;padding:2px 8px;border-radius:8px;flex-shrink:0}
+
+/* Inspiration messages */
+.msg{display:flex;gap:8px;margin-bottom:10px}
+.msg.me{flex-direction:row-reverse}
+.ma{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ma.a{background:var(--accent-bg);color:var(--accent)}
+.ma.u{background:var(--primary-bg);color:var(--primary)}
+.mb{max-width:78%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.6}
+.msg.a .mb{background:var(--surface2);border-bottom-left-radius:3px}
+.msg.me .mb{background:var(--primary-bg);border-bottom-right-radius:3px}
+.ci{display:flex;gap:8px;padding:8px 0;border-top:1px solid var(--border);margin-top:8px}
+.ci input{flex:1;border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:13px;outline:none;background:var(--bg);color:var(--text)}
+.ci input:focus{border-color:var(--primary-l)}
+
+/* Works grid */
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wc{background:var(--surface);border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow);transition:.2s;cursor:pointer}
+.wc:active{transform:scale(0.98)}
+.wcv{height:90px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.wcb{padding:8px 10px}
+.wct{font-size:12px;font-weight:600;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wcm{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:6px}
+
+/* Materials list */
+.mi{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.mi:last-child{border-bottom:none}
+.mi-ic{width:36px;height:36px;border-radius:var(--radius-sm);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.mi-in{flex:1;min-width:0}
+.mi-in .t{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-in .m{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Filter bar */
+.pf{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.pf .p{padding:3px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:11px;cursor:pointer;color:var(--text2);transition:.2s}
+.pf .p.act{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Tool grid */
+.tg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tc2{text-align:center;padding:10px;background:var(--surface);border-radius:var(--radius-sm);box-shadow:var(--shadow);cursor:pointer;transition:.2s}
+.tc2:active{transform:scale(0.97)}
+.tc2 .ti{font-size:22px}
+.tc2 .tn{font-size:11px;font-weight:500;margin-top:3px}
+.tc2 .ts{font-size:9px;color:var(--text3);margin-top:1px}
+
+/* Obsidian placeholder */
+.obsidian-note{border:2px dashed var(--primary-l);border-radius:var(--radius);padding:14px;background:var(--primary-bg);text-align:center}
+.obsidian-note .big-icon{font-size:36px;margin-bottom:6px}
+
+/* Feishu placeholder */
+.feishu-placeholder{border:2px dashed var(--accent);border-radius:var(--radius);padding:14px;background:var(--accent-bg);text-align:center}
+
+/* Desktop: 充分利用宽屏 */
+@media(min-width:768px){
+  body{max-width:none}
+  .main{padding:24px 40px 80px;width:100%}
+  .hdr{padding:0 32px}
+  .wg{grid-template-columns:1fr 1fr 1fr}
+  .tg{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr}
+  .search{width:240px}
+  .search:focus{width:300px}
+  .sec{font-size:17px}
+  .card{padding:18px}
+  .wf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .nav{max-width:100%}
+}
+@media(min-width:1200px){
+  .main{padding:24px 60px 80px}
+  .wg{grid-template-columns:1fr 1fr 1fr 1fr}
+  .wf{grid-template-columns:1fr 1fr 1fr}
+}
+@media(min-width:1600px){
+  .main{padding:24px 80px 80px}
+  .wg{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+}
+/* Mobile small */
+@media(max-width:400px){
+  .search{width:100px}
+  .wg{gap:6px}
+  .main{padding:12px 12px 80px}
+}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="logo">
+    <svg viewBox="0 0 26 26" fill="none"><path d="M13 2L2 9v7l11 7 11-7V9L13 2z" fill="currentColor" opacity="0.15"/><path d="M13 5L6 10v6l7 5 7-5v-6l-7-5z" fill="currentColor" opacity="0.3"/><path d="M13 9l-4 3v3l4 3 4-3v-3l-4-3z" fill="currentColor"/></svg>
+    AI Creator Studio
+  </div>
+  <div class="hdr-actions">
+    <input class="search" type="text" placeholder="搜索项目、素材..." />
+    <div class="av">你</div>
+  </div>
+</header>
+
+<main class="main" id="mainContent">
+
+<!-- ===== TAB 1: 工作台（项目看板） ===== -->
+<div class="tab active" id="t-workspace">
+  <div class="sec"><span>🏗️ 项目工作台</span><span class="more">+ 新建项目</span></div>
+
+  <!-- 当前项目卡片 -->
+  <div class="card" style="padding:14px;">
+    <div class="fb">
+      <div class="row"><span style="font-size:20px;">📖</span><div><div style="font-weight:600;font-size:14px;">小王子 Ch.1-5 双语阅读视频</div><div style="font-size:11px;color:var(--text3);">更新于 2 小时前</div></div></div>
+      <span class="tag tag-a">进行中</span>
+    </div>
+    <div class="bar" style="margin-top:10px;"><div class="fill a" style="width:55%"></div></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right;">整体进度 55%</div>
+  </div>
+
+  <!-- 工作流 6 阶段 -->
+  <div class="sec" style="font-size:13px;margin-bottom:6px;margin-top:4px;">
+    <span>📋 双语阅读视频工作流</span>
+    <span class="more" id="wfCollapse" style="font-size:16px;">▼</span>
+  </div>
+
+  <div class="wf" id="wfList">
+    <!-- 阶段 1: 下载音频电子书 -->
+    <div class="wf-item" data-stage="1">
+      <div class="wf-num done">✓</div>
+      <div class="wf-info">
+        <div class="wf-title">📥 下载音频电子书</div>
+        <div class="wf-desc">Librivox · 小王子法语原版音频</div>
+      </div>
+      <span class="wf-status" style="color:var(--accent);">已完成</span>
+    </div>
+
+    <!-- 阶段 2: 素材处理 -->
+    <div class="wf-item" data-stage="2">
+      <div class="wf-num done">✓</div>
+      <div class="wf-info">
+        <div class="wf-title">🔧 素材处理</div>
+        <div class="wf-desc">音频分割 + 文本清洗</div>
+      </div>
+      <span class="wf-status" style="color:var(--accent);">已完成</span>
+    </div>
+
+    <!-- 阶段 3: 文本对齐（标注） -->
+    <div class="wf-item" data-stage="3">
+      <div class="wf-num active">3</div>
+      <div class="wf-info">
+        <div class="wf-title">🔤 文本对齐（标注）</div>
+        <div class="wf-desc">法汉逐句对齐 · 第3章进行中</div>
+      </div>
+      <span class="wf-status" style="color:var(--primary);">进行中</span>
+    </div>
+
+    <!-- 阶段 4: 生成各格式文件 -->
+    <div class="wf-item" data-stage="4">
+      <div class="wf-num pending">4</div>
+      <div class="wf-info">
+        <div class="wf-title">📄 生成各格式文件</div>
+        <div class="wf-desc">JSON / Excel / DOCX / PDF / EPUB</div>
+      </div>
+      <span class="wf-status" style="color:var(--text3);">待办</span>
+    </div>
+
+    <!-- 阶段 5: 合成视频 -->
+    <div class="wf-item" data-stage="5">
+      <div class="wf-num pending">5</div>
+      <div class="wf-info">
+        <div class="wf-title">🎬 合成视频</div>
+        <div class="wf-desc">音频 + 字幕 + 视频设计</div>
+      </div>
+      <span class="wf-status" style="color:var(--text3);">待办</span>
+    </div>
+
+    <!-- 阶段 6: 平台运营 -->
+    <div class="wf-item" data-stage="6">
+      <div class="wf-num pending">6</div>
+      <div class="wf-info">
+        <div class="wf-title">📢 平台运营</div>
+        <div class="wf-desc">标题 · 文案 · 多平台发布</div>
+      </div>
+      <span class="wf-status" style="color:var(--text3);">待办</span>
+    </div>
+  </div>
+
+  <!-- 阶段详情面板（点击阶段展开） -->
+  <div class="card" id="stageDetail" style="display:none;padding:12px;">
+    <div class="fb">
+      <span id="stageDetailTitle" style="font-weight:600;font-size:14px;"></span>
+      <button class="btn btn-o btn-s" onclick="closeStageDetail()">✕</button>
+    </div>
+    <div id="stageDetailBody" style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.7;"></div>
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-p btn-s" id="stageMarkBtn" onclick="markStageDone()">✓ 标记完成</button>
+      <button class="btn btn-o btn-s">📎 添加备注</button>
+      <button class="btn btn-o btn-s" id="stageToolBtn" style="display:none;">🔧 打开工具</button>
+    </div>
+  </div>
+
+  <!-- 其他项目 -->
+  <div class="sec" style="margin-top:16px;"><span>📂 其他项目</span></div>
+  <div class="card" style="padding:12px;opacity:0.7;">
+    <div class="fb">
+      <div class="row"><span style="font-size:18px;">🗣️</span><div><div style="font-weight:500;font-size:13px;">法语问候语系列 · Salutations</div><div style="font-size:10px;color:var(--text3);">素材收集中 · 0%</div></div></div>
+      <span class="tag tag-grey">草稿</span>
+    </div>
+    <div class="bar"><div class="fill" style="width:8%"></div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: 灵感库 ===== -->
+<div class="tab" id="t-inspire">
+  <div class="sec"><span>💡 灵感库</span><span class="more" onclick="showObsidianHint()">📋 导出到 Obsidian</span></div>
+
+  <!-- 当前讨论 -->
+  <div class="sec" style="font-size:13px;font-weight:600;margin-bottom:6px;">💬 当前讨论 · 法语问候语系列</div>
+  <div class="card" style="padding:12px;">
+    <div class="msg me"><div class="ma u">我</div><div class="mb">我想做一个"法语问候语"系列，你有什么建议？</div></div>
+    <div class="msg a"><div class="ma a">🤖</div><div class="mb">
+      好主意！按场景来分最实用：<br><br>
+      <b>1. 日常基础问候</b> — Bonjour / Bonsoir / Salut / Coucou<br>
+      <b>2. 熟悉度分级</b> — 正式 vs 朋友间 vs 亲密<br>
+      <b>3. 时间维度</b> — 早上/下午/晚上/睡前<br>
+      <b>4. 文化彩蛋</b> — "faire la bise" 贴面礼
+    </div></div>
+    <div class="msg me"><div class="ma u">我</div><div class="mb">展开第2点！朋友间的非正式问候</div></div>
+    <div class="msg a"><div class="ma a">🤖</div><div class="mb">
+      <b>Les Salutations Informelles</b><br><br>
+      🗣️ <b>Salut !</b> — "嘿/嗨"<br>
+      🗣️ <b>Coucou !</b> — 可爱版，亲密朋友间<br>
+      🗣️ <b>Ça va ?</b> — "还好吗？"<br>
+      🗣️ <b>Quoi de neuf ?</b> — "有啥新鲜事？"<br><br>
+      💡 建议做"法国人到底怎么说"系列，教科书 vs 真实口语的反差感在小红书上很受欢迎！
+    </div></div>
+    <div class="ci"><input type="text" placeholder="继续说点什么..." /><button class="btn btn-p btn-s">发送</button></div>
+  </div>
+
+  <!-- 讨论记录列表 -->
+  <div class="sec" style="font-size:13px;font-weight:600;margin-bottom:6px;margin-top:16px;">📝 历史讨论记录</div>
+  <div class="card" style="padding:10px;">
+    <div class="mi"><div class="mi-ic" style="background:var(--accent-bg);">📝</div><div class="mi-in"><div class="t">法语问候语系列 · 内容大纲</div><div class="m">2026-07-26 · 4 个要点</div></div><span class="tag tag-a">草稿</span></div>
+    <div class="mi"><div class="mi-ic" style="background:var(--primary-bg);">📝</div><div class="mi-in"><div class="t">小王子 Ch.3 双语标注思路</div><div class="m">2026-07-25 · 已导出</div></div><span class="tag">已导出</span></div>
+    <div class="mi"><div class="mi-ic" style="background:#e8e8f8;">📝</div><div class="mi-in"><div class="t">"faire la grasse matinée" 内容策划</div><div class="m">2026-07-24 · 待导出</div></div><span class="chip">待导出</span></div>
+  </div>
+
+  <!-- Obsidian 导出提示（占位） -->
+  <div class="obsidian-note" id="obsidianHint">
+    <div class="big-icon">📓</div>
+    <div style="font-weight:600;font-size:14px;color:var(--primary);">导出到 Obsidian</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;">
+      讨论结果将以 Markdown 日记格式写入你的 Obsidian Vault<br>
+      <span style="font-size:11px;color:var(--text3);">路径：F:\OB_vault\obsidian-vault\📥 收件箱\</span>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-p btn-s" onclick="alert('🔌 Obsidian 导出功能将在后续版本接入\n\n当前为占位状态')">📤 导出当前讨论</button>
+      <button class="btn btn-o btn-s">⚙️ 配置路径</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: 创作台 ===== -->
+<div class="tab" id="t-create">
+  <div class="sec"><span>✍️ 创作台</span><span class="more">📤 发布</span></div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:10px 14px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">🗣️</span><span style="font-weight:600;font-size:13px;">法语问候语 · 第1期</span></div>
+      <span class="tag">编辑中</span>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;padding:6px 14px;border-bottom:1px solid var(--border);">
+      <button style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;color:var(--text2);"><b>B</b></button>
+      <button style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;color:var(--text2);"><i>I</i></button>
+      <button style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;color:var(--text2);"><u>U</u></button>
+      <button style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;color:var(--text2);">🔗</button>
+      <button style="margin-left:auto;background:var(--primary-bg);color:var(--primary);border:1px solid var(--primary-l);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;">🤖 AI 辅助</button>
+    </div>
+    <div style="padding:10px 14px;">
+      <textarea style="width:100%;min-height:100px;border:none;outline:none;resize:vertical;font-size:13px;line-height:1.8;font-family:var(--font);color:var(--text);background:transparent;" placeholder="开始写你的内容...">Bonjour ! 你好！👋
+
+今天我们开始「法语问候语」系列第一弹！
+
+【Les Salutations 法语问候语大全】
+
+1️⃣ Bonjour – 你好（白天通用，最安全）
+2️⃣ Bonsoir – 晚上好（18:00后使用）
+3️⃣ Salut – 嗨/拜（朋友间，非正式）
+4️⃣ Coucou – 啾啾（亲密朋友/情侣）
+
+💡 小贴士：法国人见面别忘了 faire la bise（贴面礼）哦！
+
+#法语学习 #法语入门 #法语口语</textarea>
+    </div>
+    <div style="padding:8px 14px;display:flex;gap:6px;border-top:1px solid var(--border);">
+      <button class="btn btn-o btn-s">🔤 双语对照</button>
+      <button class="btn btn-o btn-s">🎨 渲染卡片</button>
+      <button class="btn btn-o btn-s">👁️ 预览</button>
+      <button class="btn btn-p btn-s" style="margin-left:auto;">📤 发布</button>
+    </div>
+  </div>
+
+  <!-- 预览卡片 -->
+  <div class="sec" style="margin-top:12px;"><span>🎨 小红书卡片预览</span></div>
+  <div class="card" style="padding:12px;background:var(--surface2);">
+    <div style="background:#fff;border-radius:8px;padding:14px;max-width:300px;margin:0 auto;">
+      <div style="font-size:18px;font-weight:700;color:var(--primary);">Bonjour ! 👋</div>
+      <div style="font-size:11px;color:var(--text3);margin:3px 0 8px;">法语问候语 · 第1期</div>
+      <div style="font-size:12px;line-height:1.8;">
+        <b>1️⃣ Bonjour</b> — 你好（白天通用）<br>
+        <b>2️⃣ Bonsoir</b> — 晚上好<br>
+        <b>3️⃣ Salut</b> — 嗨/拜（朋友间）<br>
+        <b>4️⃣ Coucou</b> — 啾啾（亲密）
+      </div>
+      <div style="margin-top:8px;padding:6px;background:#fdf6ec;border-radius:6px;font-size:11px;color:#8b6a3c;">💡 法国人见面别忘了 faire la bise 哦！</div>
+      <div style="margin-top:6px;font-size:9px;color:var(--text3);text-align:center;">#法语学习 #法语入门</div>
+    </div>
+  </div>
+
+  <!-- 工具集成 -->
+  <div class="sec" style="margin-top:12px;"><span>🔧 工具集成</span></div>
+  <div class="tg">
+    <div class="tc2"><div class="ti">🎨</div><div class="tn">渲染引擎</div><div class="ts">已接入 ✓</div></div>
+    <div class="tc2"><div class="ti">📄</div><div class="tn">PPT 工具</div><div class="ts">已接入 ✓</div></div>
+    <div class="tc2" style="opacity:0.5;"><div class="ti">🔤</div><div class="tn">对齐工具</div><div class="ts">待接入</div></div>
+    <div class="tc2" style="opacity:0.5;"><div class="ti">🎬</div><div class="tn">视频合成</div><div class="ts">待接入</div></div>
+    <div class="tc2" style="opacity:0.5;"><div class="ti">📊</div><div class="tn">飞书表格</div><div class="ts">待接入</div></div>
+    <div class="tc2" style="opacity:0.5;"><div class="ti">📓</div><div class="tn">Obsidian</div><div class="ts">待接入</div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: 作品预览 ===== -->
+<div class="tab" id="t-works">
+  <div class="sec"><span>🎬 作品预览</span><span class="more">📊 飞书表格</span></div>
+
+  <div class="pf">
+    <span class="p act">全部</span>
+    <span class="p" style="background:#fff0f0;color:#d44;">📕 小红书</span>
+    <span class="p" style="background:#e8f4f8;color:#1a8a9a;">🎵 抖音</span>
+    <span class="p" style="background:#f0eef8;color:#6a5acd;">📺 B站</span>
+    <span class="p" style="background:#e8f5e8;color:#2a8a4a;">💬 公众号</span>
+  </div>
+
+  <div class="wg">
+    <div class="wc"><div class="wcv" style="background:var(--primary-bg);">📕</div><div class="wcb"><div class="wct">法语中的"Bonjour"到底怎么说才地道？</div><div class="wcm"><span class="tag tag-r">小红书</span> 7-24</div></div></div>
+    <div class="wc"><div class="wcv" style="background:var(--accent-bg);">📕</div><div class="wcb"><div class="wct">小王子 Ch.1 — 双语朗读版</div><div class="wcm"><span class="tag tag-r">小红书</span> 7-22</div></div></div>
+    <div class="wc"><div class="wcv" style="background:#f0e8f8;">📺</div><div class="wcb"><div class="wct">【法语入门】10个日常生活必备动词</div><div class="wcm"><span class="tag tag-v">B站</span> 7-20</div></div></div>
+    <div class="wc"><div class="wcv" style="background:#e8f4f8;">🎵</div><div class="wcb"><div class="wct">法语问候语：Salut vs Bonjour 区别</div><div class="wcm"><span class="tag tag-b">抖音</span> 7-19</div></div></div>
+    <div class="wc"><div class="wcv" style="background:var(--primary-bg);">📕</div><div class="wcb"><div class="wct">神秘岛 · 第一章法语原文朗读</div><div class="wcm"><span class="tag tag-r">小红书</span> 7-18</div></div></div>
+    <div class="wc"><div class="wcv" style="background:#e8f5e8;">💬</div><div class="wcb"><div class="wct">法语学习资源推荐：从入门到进阶</div><div class="wcm"><span class="tag tag-g">公众号</span> 7-15</div></div></div>
+  </div>
+
+  <!-- 飞书表格占位 -->
+  <div class="feishu-placeholder" style="margin-top:12px;">
+    <div style="font-size:28px;">📊</div>
+    <div style="font-weight:600;font-size:14px;color:var(--accent);margin-top:4px;">飞书表格集成</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;">
+      接入后，作品数据将自动同步到飞书表格<br>
+      支持标题、文案、链接、平台、发布时间等字段
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;">
+      <button class="btn btn-a btn-s" onclick="alert('🔌 飞书表格集成将在后续版本接入\n\n当前为占位状态')">🔗 配置飞书</button>
+      <button class="btn btn-o btn-s" onclick="alert('📝 手动录入模式\n\n目前可以先手动填写作品信息')">📝 手动录入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 6: 收集箱 ===== -->
+<div class="tab" id="t-inbox">
+  <div class="sec"><span>📥 收集箱</span><span class="more" id="inboxBadgeHeader">0 条待处理</span></div>
+
+  <div class="card" style="padding:12px;">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px;">🔗 添加链接</div>
+    <div style="display:flex;gap:8px;">
+      <input id="inboxInput" type="text" placeholder="粘贴 B站/抖音/小红书 视频链接..." style="flex:1;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;outline:none;background:var(--bg);color:var(--text);" />
+      <button class="btn btn-p btn-s" onclick="addToInbox()">📥 收集</button>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
+      <span class="chip" onclick="pasteBilibili()">📺 B站</span>
+      <span class="chip" onclick="pasteDouyin()">🎵 抖音</span>
+      <span class="chip" onclick="pasteXiaohongshu()">📕 小红书</span>
+    </div>
+  </div>
+
+  <div class="pf" id="inboxFilter">
+    <span class="p act" data-filter="all">全部</span>
+    <span class="p" data-filter="pending">⏳ 待处理</span>
+    <span class="p" data-filter="done">✅ 已处理</span>
+    <span class="p" data-filter="bilibili">📺 B站</span>
+    <span class="p" data-filter="douyin">🎵 抖音</span>
+    <span class="p" data-filter="xiaohongshu">📕 小红书</span>
+  </div>
+
+  <div id="inboxList"></div>
+
+  <div id="inboxEmpty" class="card" style="text-align:center;padding:32px;border:2px dashed var(--border);">
+    <div style="font-size:40px;opacity:0.3;">📥</div>
+    <div style="font-weight:600;font-size:14px;color:var(--text2);margin-top:8px;">还没有收集任何链接</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.6;">
+      粘贴视频链接到上方，或安装油猴脚本<br>刷 B站/抖音/小红书时一键收集
+    </div>
+    <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;">
+      <button class="btn btn-p btn-s" onclick="addSampleInbox()">📋 添加示例</button>
+      <button class="btn btn-o btn-s" onclick="showScriptGuide()">📜 安装脚本</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: 素材 ===== -->
+<div class="tab" id="t-assets">
+  <div class="sec"><span>📁 素材</span><span class="more">⚙️ 设置路径</span></div>
+
+  <div class="card" style="border:2px dashed var(--border);text-align:center;padding:24px;">
+    <div style="font-size:40px;opacity:0.3;">📂</div>
+    <div style="font-weight:600;font-size:14px;color:var(--text2);margin-top:8px;">素材文件夹</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.6;">
+      此区域将指向你本地的素材文件夹<br>
+      支持浏览、搜索、快速引用
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-p btn-s" onclick="alert('🔌 素材文件夹指向功能将在后续版本接入\n\n当前为占位状态')">📂 选择文件夹</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;background:var(--surface2);padding:6px 10px;border-radius:8px;display:inline-block;">
+      当前路径：<span style="color:var(--text2);">未设置</span>
+    </div>
+  </div>
+
+  <!-- 快速预览占位 -->
+  <div class="sec" style="margin-top:16px;"><span>📌 最近使用的素材</span></div>
+  <div class="card" style="padding:10px;">
+    <div class="mi"><div class="mi-ic" style="background:var(--accent-bg);">📸</div><div class="mi-in"><div class="t">巴黎街拍 — 咖啡馆招牌合集</div><div class="m">2026-07-25 · 12 张图片</div></div></div>
+    <div class="mi"><div class="mi-ic" style="background:var(--primary-bg);">🔊</div><div class="mi-in"><div class="t">小王子 Ch.1 法语原声</div><div class="m">2026-07-20 · 4:32</div></div></div>
+    <div class="mi"><div class="mi-ic" style="background:#e8e8f8;">📝</div><div class="mi-in"><div class="t">法语问候语 · 脚本草稿</div><div class="m">2026-07-26 · Markdown</div></div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ===== Bottom Nav ===== -->
+<nav class="nav">
+  <button class="nav-it active" data-tab="workspace" onclick="switchTab('workspace')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    <span>工作台</span>
+  </button>
+  <button class="nav-it" data-tab="inspire" onclick="switchTab('inspire')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+    <span>灵感</span>
+    <span class="badge">3</span>
+  </button>
+  <button class="nav-it" data-tab="create" onclick="switchTab('create')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    <span>创作</span>
+  </button>
+  <button class="nav-it" data-tab="works" onclick="switchTab('works')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+    <span>作品</span>
+  </button>
+  <button class="nav-it" data-tab="inbox" onclick="switchTab('inbox')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+    <span>收集箱</span>
+    <span class="badge" id="inboxNavBadge" style="display:none;">0</span>
+  </button>
+  <button class="nav-it" data-tab="assets" onclick="switchTab('assets')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+    <span>素材</span>
+  </button>
+</nav>
+<script>
+// Tab switching
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('t-' + name).classList.add('active');
+  document.querySelectorAll('.nav-it').forEach(n => n.classList.remove('active'));
+  document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('mainContent').scrollTop = 0;
+}
+
+// Workflow stage detail
+const stageData = {
+  1: { title: '📥 下载音频电子书', desc: '从 Librivox / Audible 等平台下载法语原版音频。\n\n当前状态：已完成\n\n文件：小王子_ch1-ch5_fr.mp3\n来源：Librivox — Antoine de Saint-Exupéry\n时长：18:24', done: true },
+  2: { title: '🔧 素材处理', desc: '音频分割、文本清洗、格式转换。\n\n当前状态：已完成\n\n输出：\n• 5 个独立章节音频文件\n• 清洗后的法文原文文本\n• 中文翻译文本', done: true },
+  3: { title: '🔤 文本对齐（标注）', desc: '法汉逐句对齐标注，使用 annotation-projects pipeline。\n\n当前状态：进行中（第3章）\n\n工具：annotation-projects/scripts/pipeline.py\n进度：Ch.1 ✓  Ch.2 ✓  Ch.3 ⬜  Ch.4 ⬜  Ch.5 ⬜', done: false },
+  4: { title: '📄 生成各格式文件', desc: '从对齐数据生成多种格式文件。\n\n当前状态：待办\n\n输出格式：\n• JSON（核心数据）\n• Excel（结构化表格）\n• DOCX（文档）\n• PDF（印刷版）\n• EPUB（电子书）', done: false },
+  5: { title: '🎬 合成视频', desc: '将音频、字幕、视觉设计合成为视频。\n\n当前状态：待办\n\n需要准备：\n• 音频文件 ✓\n• 字幕文件（ASS格式）\n• 视频背景/设计\n• 封面图', done: false },
+  6: { title: '📢 平台运营', desc: '为各平台准备标题、文案、标签，安排发布时间。\n\n当前状态：待办\n\n平台：\n• 小红书（主平台）\n• 抖音\n• B站\n• 微信公众号', done: false }
+};
+
+function showStageDetail(stage) {
+  const data = stageData[stage];
+  if (!data) return;
+  document.getElementById('stageDetailTitle').textContent = data.title;
+  document.getElementById('stageDetailBody').innerHTML = data.desc.replace(/\n/g, '<br>');
+  const markBtn = document.getElementById('stageMarkBtn');
+  if (data.done) {
+    markBtn.textContent = '✓ 已完成';
+    markBtn.className = 'btn btn-o btn-s';
+    markBtn.disabled = true;
+  } else {
+    markBtn.textContent = '✓ 标记完成';
+    markBtn.className = 'btn btn-p btn-s';
+    markBtn.disabled = false;
+  }
+  const toolBtn = document.getElementById('stageToolBtn');
+  toolBtn.style.display = stage === 3 ? 'inline-flex' : 'none';
+  document.getElementById('stageDetail').style.display = 'block';
+  document.getElementById('stageDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeStageDetail() {
+  document.getElementById('stageDetail').style.display = 'none';
+}
+
+function markStageDone() {
+  alert('✅ 已标记为完成\n\n（当前为演示效果，实际状态更新将接入数据持久化）');
+  closeStageDetail();
+}
+
+// Wire up workflow items
+document.querySelectorAll('.wf-item').forEach(el => {
+  el.addEventListener('click', function(e) {
+    const stage = parseInt(this.dataset.stage);
+    showStageDetail(stage);
+  });
+});
+
+// Obsidian hint
+function showObsidianHint() {
+  document.getElementById('obsidianHint').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('obsidianHint').style.borderColor = 'var(--primary)';
+}
+
+// PWA registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// Filter bar functionality
+document.querySelectorAll('.pf .p').forEach(el => {
+  el.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.p').forEach(p => p.classList.remove('act'));
+    this.classList.add('act');
+  });
+});
+
+// ===== 收集箱功能 =====
+let inboxData = [];
+
+function loadInbox() {
+  try {
+    const saved = localStorage.getItem('aiStudioInbox');
+    inboxData = saved ? JSON.parse(saved) : [];
+  } catch(e) { inboxData = []; }
+}
+
+function saveInbox() {
+  localStorage.setItem('aiStudioInbox', JSON.stringify(inboxData));
+  renderInbox();
+  updateInboxBadge();
+}
+
+function detectPlatform(url) {
+  if (!url) return 'unknown';
+  if (url.includes('bilibili.com')) return 'bilibili';
+  if (url.includes('douyin.com')) return 'douyin';
+  if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) return 'xiaohongshu';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  return 'other';
+}
+
+function platformEmoji(p) {
+  return { bilibili:'📺', douyin:'🎵', xiaohongshu:'📕', youtube:'▶️', other:'🔗', unknown:'🔗' }[p] || '🔗';
+}
+function platformName(p) {
+  return { bilibili:'B站', douyin:'抖音', xiaohongshu:'小红书', youtube:'YouTube', other:'其他', unknown:'未知' }[p] || '其他';
+}
+function platformColor(p) {
+  return { bilibili:'var(--tag-v,#6a5acd)', douyin:'var(--tag-b,#1a8a9a)', xiaohongshu:'var(--tag-r,#d44)', youtube:'#e74c3c', other:'var(--text3)', unknown:'var(--text3)' }[p] || 'var(--text3)';
+}
+
+function addToInbox() {
+  const input = document.getElementById('inboxInput');
+  const url = input.value.trim();
+  if (!url) { alert('请粘贴视频链接'); return; }
+  if (!url.startsWith('http')) { alert('请输入有效的链接（以 http 开头）'); return; }
+
+  const platform = detectPlatform(url);
+  const now = new Date();
+  const item = {
+    id: Date.now(),
+    url: url,
+    title: extractTitleFromUrl(url, platform),
+    platform: platform,
+    addedAt: now.toISOString(),
+    status: 'pending'
+  };
+  inboxData.unshift(item);
+  saveInbox();
+  input.value = '';
+  switchTab('inbox');
+}
+
+function extractTitleFromUrl(url, platform) {
+  const names = { bilibili:'B站视频', douyin:'抖音视频', xiaohongshu:'小红书笔记', youtube:'YouTube视频', other:'视频链接', unknown:'视频链接' };
+  return names[platform] || '视频链接';
+}
+
+function markInboxDone(id) {
+  const item = inboxData.find(i => i.id === id);
+  if (item) {
+    item.status = item.status === 'done' ? 'pending' : 'done';
+    saveInbox();
+  }
+}
+
+function deleteInboxItem(id) {
+  if (!confirm('确定删除这条记录？')) return;
+  inboxData = inboxData.filter(i => i.id !== id);
+  saveInbox();
+}
+
+function editInboxTitle(id) {
+  const item = inboxData.find(i => i.id === id);
+  if (!item) return;
+  const newTitle = prompt('修改标题：', item.title);
+  if (newTitle && newTitle.trim()) {
+    item.title = newTitle.trim();
+    saveInbox();
+  }
+}
+
+function renderInbox() {
+  const list = document.getElementById('inboxList');
+  const empty = document.getElementById('inboxEmpty');
+  const activeFilter = document.querySelector('#inboxFilter .p.act');
+  const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+
+  let filtered = [...inboxData];
+  if (filter === 'pending') filtered = filtered.filter(i => i.status === 'pending');
+  else if (filter === 'done') filtered = filtered.filter(i => i.status === 'done');
+  else if (['bilibili','douyin','xiaohongshu','youtube'].includes(filter)) filtered = filtered.filter(i => i.platform === filter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(item => {
+    const p = item.platform;
+    const isDone = item.status === 'done';
+    const date = new Date(item.addedAt);
+    const dateStr = `${date.getMonth()+1}-${date.getDate()}`;
+    return `
+      <div class="card" style="padding:12px;${isDone?'opacity:0.5;':''}">
+        <div class="fb">
+          <div class="row" style="flex:1;min-width:0;">
+            <span style="font-size:18px;">${platformEmoji(p)}</span>
+            <div style="min-width:0;">
+              <div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" ondblclick="editInboxTitle(${item.id})">${item.title}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;">
+                <span style="color:${platformColor(p)}">${platformName(p)}</span>
+                <span>${dateStr}</span>
+                <a href="${item.url}" target="_blank" style="color:var(--primary);text-decoration:none;">🔗 打开</a>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            <button class="btn ${isDone?'btn-o':'btn-a'} btn-s" onclick="markInboxDone(${item.id})">${isDone?'↩️':'✅'}</button>
+            <button class="btn btn-o btn-s" onclick="deleteInboxItem(${item.id})">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateInboxBadge() {
+  const pending = inboxData.filter(i => i.status === 'pending').length;
+  const badge = document.getElementById('inboxNavBadge');
+  const header = document.getElementById('inboxBadgeHeader');
+  if (badge) {
+    badge.textContent = pending;
+    badge.style.display = pending > 0 ? 'flex' : 'none';
+  }
+  if (header) header.textContent = pending + ' 条待处理';
+}
+
+// Inbox filter clicks
+document.addEventListener('click', function(e) {
+  const filterBtn = e.target.closest('#inboxFilter .p');
+  if (filterBtn) {
+    document.querySelectorAll('#inboxFilter .p').forEach(p => p.classList.remove('act'));
+    filterBtn.classList.add('act');
+    renderInbox();
+  }
+});
+
+// Platform paste helpers
+function pasteBilibili() { document.getElementById('inboxInput').value = 'https://www.bilibili.com/video/BV'; }
+function pasteDouyin() { document.getElementById('inboxInput').value = 'https://www.douyin.com/video/'; }
+function pasteXiaohongshu() { document.getElementById('inboxInput').value = 'https://www.xiaohongshu.com/explore/'; }
+
+function addSampleInbox() {
+  const samples = [
+    { url:'https://www.bilibili.com/video/BV1GJ411x7y', title:'【法语学习】10个日常必备动词', platform:'bilibili' },
+    { url:'https://www.douyin.com/video/734567890', title:'法语问候语：Salut vs Bonjour', platform:'douyin' },
+    { url:'https://www.xiaohongshu.com/explore/6688aabb', title:'法语口语｜一天学会10种表达', platform:'xiaohongshu' }
+  ];
+  const now = new Date();
+  samples.forEach((s, i) => {
+    const d = new Date(now);
+    d.setHours(d.getHours() - i);
+    inboxData.unshift({
+      id: Date.now() - i,
+      url: s.url,
+      title: s.title,
+      platform: s.platform,
+      addedAt: d.toISOString(),
+      status: 'pending'
+    });
+  });
+  saveInbox();
+  switchTab('inbox');
+}
+
+function showScriptGuide() {
+  alert('📜 Tampermonkey 油猴脚本安装指南\n\n' +
+    '1. 安装 Tampermonkey 浏览器插件\n' +
+    '   Chrome: chrome.google.com/webstore\n' +
+    '   Edge: edge.microsoft.com/addons\n\n' +
+    '2. 打开脚本文件：\n' +
+    '   ai-creator-studio/collector.user.js\n\n' +
+    '3. Tampermonkey 会自动提示安装\n\n' +
+    '4. 刷 B站/抖音时，视频右下角会出现"📥 收集"按钮');
+}
+
+// Init on load
+loadInbox();
+renderInbox();
+updateInboxBadge();
+
+// 处理来自 Web Share Target 的分享（手机 App 分享到工作台）
+(function handleSharedUrl() {
+  if (window.location.hash.startsWith('#shared=')) {
+    const sharedUrl = decodeURIComponent(window.location.hash.slice(8));
+    window.location.hash = '';
+    if (sharedUrl && sharedUrl.startsWith('http')) {
+      const item = {
+        id: Date.now(),
+        url: sharedUrl,
+        title: '来自手机分享',
+        platform: 'unknown',
+        addedAt: new Date().toISOString(),
+        status: 'pending'
+      };
+      // 自动检测平台
+      if (sharedUrl.includes('bilibili.com')) item.platform = 'bilibili';
+      else if (sharedUrl.includes('douyin.com')) item.platform = 'douyin';
+      else if (sharedUrl.includes('xiaohongshu.com') || sharedUrl.includes('xhslink.com')) item.platform = 'xiaohongshu';
+      else if (sharedUrl.includes('youtube.com') || sharedUrl.includes('youtu.be')) item.platform = 'youtube';
+
+      // 去重
+      const isDuplicate = inboxData.some(e => e.url === item.url);
+      if (!isDuplicate) {
+        inboxData.unshift(item);
+        saveInbox();
+        // 切换到收集箱并显示提示
+        setTimeout(() => {
+          switchTab('inbox');
+          showCollectToast('📥 已从手机接收链接！');
+        }, 300);
+      }
+    }
+  }
+})();
+
+// 简易 Toast 提示（收集箱用）
+function showCollectToast(msg) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2c241b;color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-family:var(--font);box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:99999;animation:fadeUp 0.3s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.transition = 'opacity 0.3s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+// Listen for cross-tab messages (from Tampermonkey)
+window.addEventListener('storage', function(e) {
+  if (e.key === 'aiStudioInbox' || e.key === 'aiStudioCollect') {
+    loadInbox();
+    renderInbox();
+    updateInboxBadge();
+  }
+});
+</script>
+</body>
+</html>
+

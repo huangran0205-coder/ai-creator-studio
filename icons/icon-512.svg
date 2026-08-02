@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#8b5e3c"/>
+  <path d="M256 64L96 176v160l160 96 160-96V176L256 64z" fill="rgba(255,255,255,0.15)"/>
+  <path d="M256 128L144 208v96l112 72 112-72v-96l-112-72z" fill="rgba(255,255,255,0.3)"/>
+  <path d="M256 192l-64 48v64l64 40 64-40v-64l-64-48z" fill="#fff"/>
+  <text x="256" y="420" font-size="48" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="bold">AI Studio</text>
+</svg>

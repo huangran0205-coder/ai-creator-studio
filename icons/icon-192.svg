@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="32" fill="#8b5e3c"/>
+  <path d="M96 32L40 68v56l56 36 56-36V68L96 32z" fill="rgba(255,255,255,0.15)"/>
+  <path d="M96 52L56 78v36l40 26 40-26V78l-40-26z" fill="rgba(255,255,255,0.3)"/>
+  <path d="M96 72L72 90v24l24 16 24-16V90l-24-18z" fill="#fff"/>
+  <text x="96" y="160" font-size="20" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="bold">AI</text>
+</svg>
