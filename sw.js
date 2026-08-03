@@ -21,25 +21,8 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 处理 Web Share Target 分享
+// 处理 Web Share Target 分享（已改用 GET 方式，不需要额外处理）
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // 拦截来自 Web Share Target 的 POST 请求
-  if (event.request.method === 'POST' && url.pathname.includes('share-receiver')) {
-    event.respondWith(
-      event.request.formData().then(formData => {
-        // 提取分享的链接：url 字段优先，没有则取 text 字段
-        const sharedUrl = formData.get('url') || formData.get('text') || '';
-        // 重定向到接收页面，通过 query 参数传递链接
-        return Response.redirect('./share-receiver.html?url=' + encodeURIComponent(sharedUrl), 303);
-      }).catch(() => {
-        return Response.redirect('./share-receiver.html', 303);
-      })
-    );
-    return;
-  }
-
   // 普通缓存策略
   event.respondWith(
     caches.match(event.request).then(res =>

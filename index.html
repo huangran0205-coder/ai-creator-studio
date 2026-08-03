@@ -460,18 +460,25 @@ body{display:flex;flex-direction:column;overflow:hidden}
   <!-- 剪贴板检测结果区域 -->
   <div id="clipboardResult" style="display:none;margin-bottom:10px;"></div>
 
-  <!-- 批量粘贴区域（可折叠） -->
-  <div class="card" style="padding:12px;margin-bottom:10px;" id="batchArea">
+  <!-- 批量粘贴区域（默认展开） -->
+  <div class="card" style="padding:12px;margin-bottom:10px;border:1px solid var(--primary-l);background:var(--primary-bg);" id="batchArea">
     <div class="fb" style="cursor:pointer;" onclick="toggleBatchPaste()">
-      <div style="font-weight:600;font-size:13px;">📋 批量粘贴 <span style="font-weight:400;font-size:11px;color:var(--text3);">（一次性粘贴多条链接）</span></div>
-      <span id="batchToggleIcon" style="font-size:16px;color:var(--text3);">▼</span>
+      <div style="font-weight:600;font-size:13px;">📋 批量粘贴 <span style="font-weight:400;font-size:11px;color:var(--text2);">（一次性收集多条链接）</span></div>
+      <span id="batchToggleIcon" style="font-size:16px;color:var(--primary);">▼</span>
     </div>
     <div id="batchContent" style="margin-top:8px;">
-      <textarea id="batchInput" placeholder="一次性粘贴多条链接，每行一条&#10;例如：&#10;https://www.douyin.com/video/xxx&#10;法语口语课 https://www.xiaohongshu.com/explore/xxx&#10;https://www.bilibili.com/video/BVxxx" style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;outline:none;background:var(--bg);color:var(--text);font-family:var(--font);resize:vertical;"></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;">
+        💡 刷视频时不断复制链接 → 攒一波 → 一次性粘贴到这里<br>
+        <span style="font-size:11px;color:var(--text3);">📱 安卓 Gboard 键盘有剪贴板历史功能，可以粘贴多条</span>
+      </div>
+      <textarea id="batchInput" placeholder="一次性粘贴多条链接，每行一条&#10;例如：&#10;https://www.douyin.com/video/xxx&#10;法语口语课 https://www.xiaohongshu.com/explore/xxx&#10;https://www.bilibili.com/video/BVxxx" style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;outline:none;background:var(--surface);color:var(--text);font-family:var(--font);resize:vertical;"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
         <button class="btn btn-p btn-s" onclick="batchAddToInbox()">📥 批量收集</button>
         <button class="btn btn-o btn-s" onclick="document.getElementById('batchInput').value=''">清空</button>
         <span id="batchResult" style="margin-left:auto;font-size:12px;color:var(--text3);align-self:center;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">
+        ✅ 自动识别链接 · 自动提取标题 · 自动去重
       </div>
     </div>
   </div>
