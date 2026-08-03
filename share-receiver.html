@@ -81,10 +81,16 @@
     if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) return 'xiaohongshu';
     if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
     if (url.includes('kuaishou.com') || url.includes('gifshow.com')) return 'kuaishou';
+    if (url.includes('weixin.qq.com') || url.includes('channels.weixin')) return 'weixin';
+    if (url.includes('weibo.com')) return 'weibo';
+    if (url.includes('zhihu.com')) return 'zhihu';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
     return 'other';
   }
-  function platformEmoji(p) { return {bilibili:'📺',douyin:'🎵',xiaohongshu:'📕',youtube:'▶️',kuaishou:'🎬',other:'🔗'}[p]||'🔗'; }
-  function platformName(p) { return {bilibili:'B站',douyin:'抖音',xiaohongshu:'小红书',youtube:'YouTube',kuaishou:'快手',other:'其他'}[p]||'其他'; }
+  function platformEmoji(p) { return {bilibili:'📺',douyin:'🎵',xiaohongshu:'📕',youtube:'▶️',kuaishou:'🎬',weixin:'💬',weibo:'📢',zhihu:'❓',instagram:'📷',tiktok:'🎶',twitter:'🐦',other:'🔗'}[p]||'🔗'; }
+  function platformName(p) { return {bilibili:'B站',douyin:'抖音',xiaohongshu:'小红书',youtube:'YouTube',kuaishou:'快手',weixin:'微信视频号',weibo:'微博',zhihu:'知乎',instagram:'Instagram',tiktok:'TikTok',twitter:'Twitter/X',other:'其他'}[p]||'其他'; }
 
   function showCard(id) {
     document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));

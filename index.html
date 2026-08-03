@@ -483,13 +483,28 @@ body{display:flex;flex-direction:column;overflow:hidden}
     </div>
   </div>
 
+  <!-- 一键处理 -->
+  <div class="card" style="padding:12px;margin-bottom:10px;background:var(--accent-bg);border:1px solid var(--accent);">
+    <div class="fb">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--accent);">⚡ 一键处理</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px;">共 <span id="totalLinks">0</span> 条链接</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-a btn-s" onclick="copyAllLinks()">📋 复制全部链接</button>
+        <button class="btn btn-o btn-s" onclick="clearAllLinks()">🗑️ 清空全部</button>
+      </div>
+    </div>
+  </div>
+
   <div class="pf" id="inboxFilter">
     <span class="p act" data-filter="all">全部</span>
-    <span class="p" data-filter="pending">⏳ 待处理</span>
-    <span class="p" data-filter="done">✅ 已处理</span>
     <span class="p" data-filter="bilibili">📺 B站</span>
     <span class="p" data-filter="douyin">🎵 抖音</span>
     <span class="p" data-filter="xiaohongshu">📕 小红书</span>
+    <span class="p" data-filter="kuaishou">🎬 快手</span>
+    <span class="p" data-filter="youtube">▶️ YouTube</span>
+    <span class="p" data-filter="other">🔗 其他</span>
   </div>
 
   <div id="inboxList"></div>
@@ -667,14 +682,21 @@ function detectPlatform(url) {
   if (url.includes('douyin.com')) return 'douyin';
   if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) return 'xiaohongshu';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('kuaishou.com') || url.includes('gifshow.com')) return 'kuaishou';
+  if (url.includes('weixin.qq.com') || url.includes('channels.weixin')) return 'weixin';
+  if (url.includes('weibo.com')) return 'weibo';
+  if (url.includes('zhihu.com')) return 'zhihu';
+  if (url.includes('instagram.com') || url.includes('ins.gg')) return 'instagram';
+  if (url.includes('tiktok.com')) return 'tiktok';
+  if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
   return 'other';
 }
 
 function platformEmoji(p) {
-  return { bilibili:'📺', douyin:'🎵', xiaohongshu:'📕', youtube:'▶️', other:'🔗', unknown:'🔗' }[p] || '🔗';
+  return { bilibili:'📺', douyin:'🎵', xiaohongshu:'📕', youtube:'▶️', kuaishou:'🎬', weixin:'💬', weibo:'📢', zhihu:'❓', instagram:'📷', tiktok:'🎶', twitter:'🐦', other:'🔗', unknown:'🔗' }[p] || '🔗';
 }
 function platformName(p) {
-  return { bilibili:'B站', douyin:'抖音', xiaohongshu:'小红书', youtube:'YouTube', other:'其他', unknown:'未知' }[p] || '其他';
+  return { bilibili:'B站', douyin:'抖音', xiaohongshu:'小红书', youtube:'YouTube', kuaishou:'快手', weixin:'微信视频号', weibo:'微博', zhihu:'知乎', instagram:'Instagram', tiktok:'TikTok', twitter:'Twitter/X', other:'其他', unknown:'未知' }[p] || '其他';
 }
 function platformColor(p) {
   return { bilibili:'var(--tag-v,#6a5acd)', douyin:'var(--tag-b,#1a8a9a)', xiaohongshu:'var(--tag-r,#d44)', youtube:'#e74c3c', other:'var(--text3)', unknown:'var(--text3)' }[p] || 'var(--text3)';
@@ -712,12 +734,31 @@ function extractTitleFromUrl(url, platform) {
   return names[platform] || '视频链接';
 }
 
-function markInboxDone(id) {
-  const item = inboxData.find(i => i.id === id);
-  if (item) {
-    item.status = item.status === 'done' ? 'pending' : 'done';
-    saveInbox();
-  }
+// 清除旧函数（不再使用）
+
+// ===== 一键处理 =====
+function copyAllLinks() {
+  if (inboxData.length === 0) { showCollectToast('没有链接可复制'); return; }
+  const text = inboxData.map((item, i) => {
+    const pName = platformName(item.platform);
+    return `${i+1}. [${pName}] ${item.title}\n   ${item.url}`;
+  }).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showCollectToast('📋 已复制 ' + inboxData.length + ' 条链接');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    showCollectToast('📋 已复制 ' + inboxData.length + ' 条链接');
+  });
+}
+
+function clearAllLinks() {
+  if (inboxData.length === 0) return;
+  if (!confirm('确定清空全部 ' + inboxData.length + ' 条链接？此操作不可恢复。')) return;
+  inboxData = [];
+  saveInbox();
+  showCollectToast('🗑️ 已清空全部链接');
 }
 
 function deleteInboxItem(id) {
@@ -743,9 +784,13 @@ function renderInbox() {
   const filter = activeFilter ? activeFilter.dataset.filter : 'all';
 
   let filtered = [...inboxData];
-  if (filter === 'pending') filtered = filtered.filter(i => i.status === 'pending');
-  else if (filter === 'done') filtered = filtered.filter(i => i.status === 'done');
-  else if (['bilibili','douyin','xiaohongshu','youtube'].includes(filter)) filtered = filtered.filter(i => i.platform === filter);
+  if (['bilibili','douyin','xiaohongshu','kuaishou','youtube','weixin','weibo','zhihu','instagram','tiktok','twitter','other'].includes(filter)) {
+    if (filter === 'other') {
+      filtered = filtered.filter(i => !['bilibili','douyin','xiaohongshu','kuaishou','youtube','weixin','weibo','zhihu','instagram','tiktok','twitter'].includes(i.platform));
+    } else {
+      filtered = filtered.filter(i => i.platform === filter);
+    }
+  }
 
   if (filtered.length === 0) {
     list.innerHTML = '';
@@ -756,26 +801,22 @@ function renderInbox() {
 
   list.innerHTML = filtered.map(item => {
     const p = item.platform;
-    const isDone = item.status === 'done';
     const date = new Date(item.addedAt);
     const dateStr = `${date.getMonth()+1}-${date.getDate()}`;
     return `
-      <div class="card" style="padding:12px;${isDone?'opacity:0.5;':''}">
+      <div class="card" style="padding:10px;">
         <div class="fb">
           <div class="row" style="flex:1;min-width:0;">
-            <span style="font-size:18px;">${platformEmoji(p)}</span>
+            <span style="font-size:16px;">${platformEmoji(p)}</span>
             <div style="min-width:0;">
               <div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" ondblclick="editInboxTitle(${item.id})">${item.title}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;">
-                <span style="color:${platformColor(p)}">${platformName(p)}</span>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="color:${platformColor(p)}">${platformEmoji(p)} ${platformName(p)}</span>
                 <span>${dateStr}</span>
                 <a href="${item.url}" target="_blank" style="color:var(--primary);text-decoration:none;">🔗 打开</a>
+                <span style="cursor:pointer;color:var(--text3);font-size:11px;" onclick="deleteInboxItem(${item.id})">🗑️ 删除</span>
               </div>
             </div>
-          </div>
-          <div style="display:flex;gap:4px;flex-shrink:0;">
-            <button class="btn ${isDone?'btn-o':'btn-a'} btn-s" onclick="markInboxDone(${item.id})">${isDone?'↩️':'✅'}</button>
-            <button class="btn btn-o btn-s" onclick="deleteInboxItem(${item.id})">🗑️</button>
           </div>
         </div>
       </div>`;
@@ -783,14 +824,16 @@ function renderInbox() {
 }
 
 function updateInboxBadge() {
-  const pending = inboxData.filter(i => i.status === 'pending').length;
+  const total = inboxData.length;
   const badge = document.getElementById('inboxNavBadge');
   const header = document.getElementById('inboxBadgeHeader');
   if (badge) {
-    badge.textContent = pending;
-    badge.style.display = pending > 0 ? 'flex' : 'none';
+    badge.textContent = total;
+    badge.style.display = total > 0 ? 'flex' : 'none';
   }
-  if (header) header.textContent = pending + ' 条待处理';
+  if (header) header.textContent = total + ' 条链接';
+  const totalSpan = document.getElementById('totalLinks');
+  if (totalSpan) totalSpan.textContent = total;
 }
 
 // Inbox filter clicks
