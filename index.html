@@ -485,15 +485,19 @@ body{display:flex;flex-direction:column;overflow:hidden}
 
   <!-- 一键处理 -->
   <div class="card" style="padding:12px;margin-bottom:10px;background:var(--accent-bg);border:1px solid var(--accent);">
-    <div class="fb">
+    <div class="fb" style="flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-weight:600;font-size:13px;color:var(--accent);">⚡ 一键处理</div>
         <div style="font-size:11px;color:var(--text2);margin-top:2px;">共 <span id="totalLinks">0</span> 条链接</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-a btn-s" onclick="copyAllLinks()">📋 复制全部链接</button>
-        <button class="btn btn-o btn-s" onclick="clearAllLinks()">🗑️ 清空全部</button>
+        <button class="btn btn-a btn-s" onclick="copyAllLinks()">📋 复制全部</button>
+        <button class="btn btn-a btn-s" onclick="exportToBiliNote()">🤖 发送到 BiliNote</button>
+        <button class="btn btn-o btn-s" onclick="clearAllLinks()">🗑️ 清空</button>
       </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px;padding-top:6px;border-top:1px solid var(--accent);opacity:0.7;">
+      💡 复制链接 → 粘贴到电脑的 <code style="background:var(--surface);padding:1px 6px;border-radius:4px;font-size:10px;">pending_links.txt</code> → 桥接脚本自动调用 BiliNote 生成笔记
     </div>
   </div>
 
@@ -759,6 +763,22 @@ function clearAllLinks() {
   inboxData = [];
   saveInbox();
   showCollectToast('🗑️ 已清空全部链接');
+}
+
+function exportToBiliNote() {
+  if (inboxData.length === 0) { showCollectToast('没有链接可导出'); return; }
+  // 生成 BiliNote 格式的文本
+  const text = inboxData.map((item, i) => {
+    return `${item.url}`;
+  }).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showCollectToast('✅ 已复制 ' + inboxData.length + ' 条链接，请粘贴到电脑的 pending_links.txt');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    showCollectToast('✅ 已复制 ' + inboxData.length + ' 条链接');
+  });
 }
 
 function deleteInboxItem(id) {
