@@ -659,16 +659,21 @@ function platformColor(p) {
 
 function addToInbox() {
   const input = document.getElementById('inboxInput');
-  const url = input.value.trim();
-  if (!url) { alert('请粘贴视频链接'); return; }
+  const raw = input.value.trim();
+  if (!raw) { alert('请粘贴视频链接'); return; }
+  // 从混合文本中提取 URL
+  const url = extractUrlFromText(raw) || raw;
   if (!url.startsWith('http')) { alert('请输入有效的链接（以 http 开头）'); return; }
+
+  // 提取标题
+  const title = extractTitleFromText(raw) || extractTitleFromUrl(url, detectPlatform(url));
 
   const platform = detectPlatform(url);
   const now = new Date();
   const item = {
     id: Date.now(),
     url: url,
-    title: extractTitleFromUrl(url, platform),
+    title: title,
     platform: platform,
     addedAt: now.toISOString(),
     status: 'pending'
@@ -815,6 +820,26 @@ function showScriptGuide() {
 }
 
 // ===== 剪贴板检测 =====
+// 从混合文本中提取 URL（抖音/小红书复制的内容常带标题）
+function extractUrlFromText(text) {
+  if (!text) return null;
+  // 匹配 http:// 或 https:// 开头的 URL
+  const urlRegex = /https?:\/\/[^\s\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+/g;
+  const matches = text.match(urlRegex);
+  return matches ? matches[0] : null;
+}
+
+// 从混合文本中提取标题（URL 前面的文字）
+function extractTitleFromText(text) {
+  if (!text) return null;
+  const url = extractUrlFromText(text);
+  if (!url) return null;
+  const beforeUrl = text.substring(0, text.indexOf(url)).trim();
+  // 清理标题：去掉特殊字符、限制长度
+  const clean = beforeUrl.replace(/[【】\s\-_|▶️🎵📺📕#]+/g, ' ').trim();
+  return clean.length > 0 ? clean.slice(0, 80) : null;
+}
+
 async function checkClipboard() {
   const resultDiv = document.getElementById('clipboardResult');
   try {
@@ -826,23 +851,28 @@ async function checkClipboard() {
     }
 
     const trimmed = text.trim();
-    // 检测是否是链接
-    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-      showClipboardResult('📋 剪贴板内容不是链接：' + trimmed.slice(0, 50), 'var(--text3)');
+    // 从混合文本中提取 URL（抖音/小红书复制的内容常带标题）
+    const extractedUrl = extractUrlFromText(trimmed);
+    if (!extractedUrl) {
+      showClipboardResult('📋 剪贴板中没有找到链接', 'var(--text3)');
       return;
     }
 
+    // 提取标题（如果有）
+    const extractedTitle = extractTitleFromText(trimmed);
+
     // 检测是否已收集过
-    const isDuplicate = inboxData.some(e => e.url === trimmed);
+    const isDuplicate = inboxData.some(e => e.url === extractedUrl);
     if (isDuplicate) {
       showClipboardResult('⏳ 这个链接已经收集过了', 'var(--text3)');
       return;
     }
 
     // 显示检测结果，让用户确认
-    const platform = detectPlatform(trimmed);
+    const platform = detectPlatform(extractedUrl);
     const emoji = platformEmoji(platform);
     const name = platformName(platform);
+    const displayTitle = extractedTitle || '视频链接';
 
     resultDiv.innerHTML = `
       <div class="card" style="padding:12px;background:var(--accent-bg);border:1px solid var(--accent);">
@@ -850,13 +880,13 @@ async function checkClipboard() {
           <div class="row">
             <span style="font-size:18px;">📋</span>
             <div>
-              <div style="font-weight:500;font-size:13px;">检测到剪贴板中的链接</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:2px;word-break:break-all;">${emoji} ${name} · ${trimmed.slice(0, 60)}...</div>
+              <div style="font-weight:500;font-size:13px;">${displayTitle}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px;word-break:break-all;">${emoji} ${name}</div>
             </div>
           </div>
         </div>
         <div style="margin-top:8px;display:flex;gap:6px;">
-          <button class="btn btn-a btn-s" onclick="confirmClipboardCollect('${escapeHtml(trimmed)}')">✅ 确认收集</button>
+          <button class="btn btn-a btn-s" onclick="confirmClipboardCollect('${escapeHtml(extractedUrl)}', '${escapeHtml(displayTitle)}')">✅ 确认收集</button>
           <button class="btn btn-o btn-s" onclick="dismissClipboard()">跳过</button>
         </div>
       </div>`;
@@ -873,14 +903,14 @@ async function checkClipboard() {
   }
 }
 
-function confirmClipboardCollect(url) {
+function confirmClipboardCollect(url, title) {
   // 直接添加到收集箱
   const platform = detectPlatform(url);
   const now = new Date();
   const item = {
     id: Date.now(),
     url: url,
-    title: extractTitleFromUrl(url, platform),
+    title: title || extractTitleFromUrl(url, platform),
     platform: platform,
     addedAt: now.toISOString(),
     status: 'pending'
@@ -919,7 +949,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // 延迟一下让输入框内容更新
       setTimeout(() => {
         const val = input.value.trim();
-        if (val.startsWith('http')) {
+        const url = extractUrlFromText(val);
+        if (url) {
           // 自动触发收集
           addToInbox();
         }
