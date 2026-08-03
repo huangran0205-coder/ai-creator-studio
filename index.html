@@ -453,8 +453,12 @@ body{display:flex;flex-direction:column;overflow:hidden}
       <span class="chip" onclick="pasteBilibili()">📺 B站</span>
       <span class="chip" onclick="pasteDouyin()">🎵 抖音</span>
       <span class="chip" onclick="pasteXiaohongshu()">📕 小红书</span>
+      <span class="chip" id="clipboardDetectBtn" onclick="checkClipboard()" style="background:var(--accent-bg);color:var(--accent);cursor:pointer;">📋 检测剪贴板</span>
     </div>
   </div>
+
+  <!-- 剪贴板检测结果区域 -->
+  <div id="clipboardResult" style="display:none;margin-bottom:10px;"></div>
 
   <div class="pf" id="inboxFilter">
     <span class="p act" data-filter="all">全部</span>
@@ -809,6 +813,120 @@ function showScriptGuide() {
     '3. Tampermonkey 会自动提示安装\n\n' +
     '4. 刷 B站/抖音时，视频右下角会出现"📥 收集"按钮');
 }
+
+// ===== 剪贴板检测 =====
+async function checkClipboard() {
+  const resultDiv = document.getElementById('clipboardResult');
+  try {
+    // 尝试读取剪贴板
+    const text = await navigator.clipboard.readText();
+    if (!text || !text.trim()) {
+      showClipboardResult('❌ 剪贴板是空的', 'var(--text3)');
+      return;
+    }
+
+    const trimmed = text.trim();
+    // 检测是否是链接
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      showClipboardResult('📋 剪贴板内容不是链接：' + trimmed.slice(0, 50), 'var(--text3)');
+      return;
+    }
+
+    // 检测是否已收集过
+    const isDuplicate = inboxData.some(e => e.url === trimmed);
+    if (isDuplicate) {
+      showClipboardResult('⏳ 这个链接已经收集过了', 'var(--text3)');
+      return;
+    }
+
+    // 显示检测结果，让用户确认
+    const platform = detectPlatform(trimmed);
+    const emoji = platformEmoji(platform);
+    const name = platformName(platform);
+
+    resultDiv.innerHTML = `
+      <div class="card" style="padding:12px;background:var(--accent-bg);border:1px solid var(--accent);">
+        <div class="fb">
+          <div class="row">
+            <span style="font-size:18px;">📋</span>
+            <div>
+              <div style="font-weight:500;font-size:13px;">检测到剪贴板中的链接</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px;word-break:break-all;">${emoji} ${name} · ${trimmed.slice(0, 60)}...</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;">
+          <button class="btn btn-a btn-s" onclick="confirmClipboardCollect('${escapeHtml(trimmed)}')">✅ 确认收集</button>
+          <button class="btn btn-o btn-s" onclick="dismissClipboard()">跳过</button>
+        </div>
+      </div>`;
+    resultDiv.style.display = 'block';
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  } catch (e) {
+    // 剪贴板读取失败（权限不足或无用户手势）
+    if (e.name === 'NotAllowedError') {
+      showClipboardResult('⚠️ 请先点击输入框，然后按 Ctrl+V 粘贴链接', 'var(--text3)');
+    } else {
+      showClipboardResult('❌ 读取剪贴板失败：' + e.message, 'var(--text3)');
+    }
+  }
+}
+
+function confirmClipboardCollect(url) {
+  // 直接添加到收集箱
+  const platform = detectPlatform(url);
+  const now = new Date();
+  const item = {
+    id: Date.now(),
+    url: url,
+    title: extractTitleFromUrl(url, platform),
+    platform: platform,
+    addedAt: now.toISOString(),
+    status: 'pending'
+  };
+  inboxData.unshift(item);
+  saveInbox();
+  dismissClipboard();
+  showCollectToast('✅ 已收集链接！');
+  // 切换到全部列表
+  document.querySelectorAll('#inboxFilter .p').forEach(p => p.classList.remove('act'));
+  document.querySelector('#inboxFilter [data-filter="all"]').classList.add('act');
+  renderInbox();
+}
+
+function dismissClipboard() {
+  document.getElementById('clipboardResult').style.display = 'none';
+  document.getElementById('clipboardResult').innerHTML = '';
+}
+
+function showClipboardResult(msg, color) {
+  const div = document.getElementById('clipboardResult');
+  div.innerHTML = `<div class="card" style="padding:10px;font-size:13px;color:${color};">${msg}</div>`;
+  div.style.display = 'block';
+  setTimeout(() => { div.style.display = 'none'; }, 3000);
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 输入框粘贴自动检测
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('inboxInput');
+  if (input) {
+    input.addEventListener('paste', function() {
+      // 延迟一下让输入框内容更新
+      setTimeout(() => {
+        const val = input.value.trim();
+        if (val.startsWith('http')) {
+          // 自动触发收集
+          addToInbox();
+        }
+      }, 100);
+    });
+  }
+});
 
 // Init on load
 loadInbox();
