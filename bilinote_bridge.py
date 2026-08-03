@@ -32,7 +32,7 @@ except ImportError:
 # CONFIG - 按需修改
 # ============================================================
 CONFIG = {
-    "bilinote_api": "http://127.0.0.1:8484",
+    "bilinote_api": "http://127.0.0.1:8483/api",
     "links_file": r"E:\Github_projet\BiliNote\pending_links.txt",
     "processed_file": r"E:\Github_projet\BiliNote\bridge_processed.json",
     "log_file": r"E:\Github_projet\BiliNote\bridge_log.txt",
