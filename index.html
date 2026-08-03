@@ -460,6 +460,22 @@ body{display:flex;flex-direction:column;overflow:hidden}
   <!-- 剪贴板检测结果区域 -->
   <div id="clipboardResult" style="display:none;margin-bottom:10px;"></div>
 
+  <!-- 批量粘贴区域（可折叠） -->
+  <div class="card" style="padding:12px;margin-bottom:10px;" id="batchArea">
+    <div class="fb" style="cursor:pointer;" onclick="toggleBatchPaste()">
+      <div style="font-weight:600;font-size:13px;">📋 批量粘贴 <span style="font-weight:400;font-size:11px;color:var(--text3);">（一次性粘贴多条链接）</span></div>
+      <span id="batchToggleIcon" style="font-size:16px;color:var(--text3);">▼</span>
+    </div>
+    <div id="batchContent" style="margin-top:8px;">
+      <textarea id="batchInput" placeholder="一次性粘贴多条链接，每行一条&#10;例如：&#10;https://www.douyin.com/video/xxx&#10;法语口语课 https://www.xiaohongshu.com/explore/xxx&#10;https://www.bilibili.com/video/BVxxx" style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;outline:none;background:var(--bg);color:var(--text);font-family:var(--font);resize:vertical;"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-p btn-s" onclick="batchAddToInbox()">📥 批量收集</button>
+        <button class="btn btn-o btn-s" onclick="document.getElementById('batchInput').value=''">清空</button>
+        <span id="batchResult" style="margin-left:auto;font-size:12px;color:var(--text3);align-self:center;"></span>
+      </div>
+    </div>
+  </div>
+
   <div class="pf" id="inboxFilter">
     <span class="p act" data-filter="all">全部</span>
     <span class="p" data-filter="pending">⏳ 待处理</span>
@@ -941,6 +957,57 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ===== 批量粘贴功能 =====
+let batchExpanded = true;
+
+function toggleBatchPaste() {
+  batchExpanded = !batchExpanded;
+  document.getElementById('batchContent').style.display = batchExpanded ? 'block' : 'none';
+  document.getElementById('batchToggleIcon').textContent = batchExpanded ? '▼' : '▶';
+}
+
+function batchAddToInbox() {
+  const input = document.getElementById('batchInput');
+  const raw = input.value.trim();
+  if (!raw) { alert('请先粘贴链接'); return; }
+
+  const lines = raw.split('\n').filter(l => l.trim());
+  let added = 0;
+  let skipped = 0;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    const url = extractUrlFromText(trimmed);
+    if (!url || !url.startsWith('http')) { skipped++; return; }
+    // 去重
+    if (inboxData.some(e => e.url === url)) { skipped++; return; }
+
+    const title = extractTitleFromText(trimmed) || extractTitleFromUrl(url, detectPlatform(url));
+    const platform = detectPlatform(url);
+    const item = {
+      id: Date.now() + added,
+      url: url,
+      title: title,
+      platform: platform,
+      addedAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    inboxData.unshift(item);
+    added++;
+  });
+
+  if (added > 0) {
+    saveInbox();
+    input.value = '';
+    document.getElementById('batchResult').textContent = `✅ 已收集 ${added} 条${skipped > 0 ? `，跳过 ${skipped} 条` : ''}`;
+    document.getElementById('batchResult').style.color = 'var(--accent)';
+    renderInbox();
+  } else {
+    document.getElementById('batchResult').textContent = `⚠️ 没有新链接可收集${skipped > 0 ? `（跳过 ${skipped} 条无效/重复）` : ''}`;
+    document.getElementById('batchResult').style.color = 'var(--text3)';
+  }
+}
+
 // 输入框粘贴自动检测
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById('inboxInput');
@@ -966,6 +1033,11 @@ updateInboxBadge();
 
 // 处理来自 Web Share Target 的分享（手机 App 分享到工作台）
 (function handleSharedUrl() {
+  // 来自 share-receiver 的 "查看收集箱" 跳转
+  if (window.location.search.includes('focus=inbox')) {
+    setTimeout(() => switchTab('inbox'), 200);
+  }
+
   if (window.location.hash.startsWith('#shared=')) {
     const sharedUrl = decodeURIComponent(window.location.hash.slice(8));
     window.location.hash = '';

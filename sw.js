@@ -31,10 +31,10 @@ self.addEventListener('fetch', event => {
       event.request.formData().then(formData => {
         // 提取分享的链接：url 字段优先，没有则取 text 字段
         const sharedUrl = formData.get('url') || formData.get('text') || '';
-        // 重定向到主页面，通过 hash 传递分享的链接
-        return Response.redirect('./index.html#shared=' + encodeURIComponent(sharedUrl), 303);
+        // 重定向到接收页面，通过 query 参数传递链接
+        return Response.redirect('./share-receiver.html?url=' + encodeURIComponent(sharedUrl), 303);
       }).catch(() => {
-        return Response.redirect('./index.html', 303);
+        return Response.redirect('./share-receiver.html', 303);
       })
     );
     return;
