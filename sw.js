@@ -1,4 +1,4 @@
-const CACHE = 'ai-creator-studio-v1';
+const CACHE = 'ai-creator-studio-v2';
 const ASSETS = [
   'index.html',
   'manifest.json',
