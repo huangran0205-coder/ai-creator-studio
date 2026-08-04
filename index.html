@@ -1553,12 +1553,19 @@ async function sendInspireMsg() {
       loadingMsg.content = `⚠️ API 返回错误: ${resp.status} ${resp.statusText}\n\n请检查配置或网络连接。`;
       isStreaming = false;
     } else {
-      const data = await resp.json();
-      const choice = data.choices && data.choices[0];
-      loadingMsg.content = choice && choice.message ? choice.message.content : '(无回复内容)';
+      const contentType = resp.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        const data = await resp.json();
+        const choice = data.choices && data.choices[0];
+        loadingMsg.content = choice && choice.message ? choice.message.content : '(无回复内容)';
+      } else {
+        const text = await resp.text();
+        loadingMsg.content = `❌ API 返回非 JSON 响应 (${contentType})\n\n响应内容: ${text.slice(0,200)}\n\n请检查 Base URL 是否正确，需要指向 OpenAI 兼容的 /v1 端点`;
+        isStreaming = false;
+      }
     }
   } catch(e) {
-    loadingMsg.content = `❌ 网络错误: ${e.message}\n\n请确认: 1) API Key 正确 2) 网络连接正常 3) CORS 允许浏览器访问该 API`;
+    loadingMsg.content = `❌ 网络错误: ${e.message}\n\n请确认: 1) API Key 正确 2) 网络连接正常 3) CORS 允许浏览器访问该 API 4) Base URL 指向正确的端点`;
     isStreaming = false;
   }
 

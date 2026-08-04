@@ -1,4 +1,4 @@
-const CACHE = 'ai-creator-studio-v2';
+const CACHE = 'ai-creator-studio-v3';
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -21,16 +21,19 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 处理 Web Share Target 分享：拦截 POST 请求（兼容旧缓存）
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // 放行跨域请求（API 调用等），让浏览器正常处理，不经过 SW 缓存
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   // 拦截 POST 请求到 share-receiver（GitHub Pages 不支持 POST）
   if (event.request.method === 'POST' && url.pathname.includes('share-receiver')) {
     event.respondWith(
       event.request.formData().then(formData => {
         const sharedUrl = formData.get('url') || formData.get('text') || '';
-        // 转为 GET 请求，通过 query 参数传递
         return Response.redirect('./share-receiver.html?url=' + encodeURIComponent(sharedUrl), 303);
       }).catch(() => {
         return Response.redirect('./share-receiver.html', 303);
@@ -39,10 +42,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 普通缓存策略
-  event.respondWith(
-    caches.match(event.request).then(res =>
-      res || fetch(event.request).catch(() => new Response('离线模式', { status: 200 }))
-    )
-  );
+  // 只缓存同源静态资源，失败时不返回假响应，让浏览器报真实错误
+  if (['GET', 'HEAD'].includes(event.request.method)) {
+    event.respondWith(
+      caches.match(event.request).then(res => res || fetch(event.request))
+    );
+    return;
+  }
 });
