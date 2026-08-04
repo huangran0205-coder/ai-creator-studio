@@ -65,6 +65,8 @@ CONFIG = {
         "xiaohongshu": ["#小红书", "#article"],
         "default":     ["#note"],
     },
+    # 全局标签：每个生成的笔记都会带上
+    "global_tags": ["#collected"],
 }
 
 # ============================================================
@@ -256,7 +258,11 @@ def save_markdown_to_obsidian(task_id: str, result: dict, link: dict):
     # 根据平台打标签
     platform = link["platform"]
     platform_tags = CONFIG.get("platform_tags", {})
-    tags = platform_tags.get(platform, platform_tags.get("default", ["#note"]))
+    tags = list(platform_tags.get(platform, platform_tags.get("default", ["#note"])))
+    # 追加全局标签
+    for gt in CONFIG.get("global_tags", []):
+        if gt not in tags:
+            tags.append(gt)
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
