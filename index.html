@@ -1543,29 +1543,43 @@ async function sendInspireMsg() {
 
   try {
     const messages = currentInspire.messages.map(m => ({ role: m.role, content: m.content }));
-    const resp = await fetch(inspireConfig.base_url + '/chat/completions', {
+    // 通过 BiliNote 后端代理（同源请求，无 CORS 问题）
+    const resp = await fetch('http://127.0.0.1:8483/api/inspire/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + inspireConfig.api_key },
-      body: JSON.stringify({ model: inspireConfig.model, messages: messages })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: messages,
+        base_url: inspireConfig.base_url,
+        api_key: inspireConfig.api_key,
+        model: inspireConfig.model
+      })
     });
 
     if (!resp.ok) {
-      loadingMsg.content = `⚠️ API 返回错误: ${resp.status} ${resp.statusText}\n\n请检查配置或网络连接。`;
+      const errText = await resp.text();
+      loadingMsg.content = `⚠️ 后端代理请求失败: HTTP ${resp.status}\n\n${errText.slice(0,300)}`;
       isStreaming = false;
     } else {
-      const contentType = resp.headers.get('content-type') || '';
-      if (contentType.includes('json')) {
-        const data = await resp.json();
-        const choice = data.choices && data.choices[0];
-        loadingMsg.content = choice && choice.message ? choice.message.content : '(无回复内容)';
-      } else {
-        const text = await resp.text();
-        loadingMsg.content = `❌ API 返回非 JSON 响应 (${contentType})\n\n响应内容: ${text.slice(0,200)}\n\n请检查 Base URL 是否正确，需要指向 OpenAI 兼容的 /v1 端点`;
+      const data = await resp.json();
+      if (data.error) {
+        loadingMsg.content = `⚠️ API 代理错误:\n\n${data.error}`;
         isStreaming = false;
+      } else {
+        loadingMsg.content = data.content || '(无回复内容)';
       }
     }
   } catch(e) {
-    loadingMsg.content = `❌ 网络错误: ${e.message}\n\n请确认: 1) API Key 正确 2) 网络连接正常 3) CORS 允许浏览器访问该 API 4) Base URL 指向正确的端点`;
+    let hint = '';
+    if (e.message.includes('Failed to fetch')) {
+      hint = `\n\n💡 这是 CORS 或协议限制，不是 API Key 问题：\n` +
+        `1) 确认 Base URL 指向正确的端点（如 https://api.sensenova.cn/v1）\n` +
+        `2) 确认该 API 支持 CORS（允许浏览器跨域访问）\n` +
+        `3) 用 curl 测试: curl -H "Authorization: Bearer [key]" "${inspireConfig.base_url}/chat/completions" -d '{"model":"${inspireConfig.model}","messages":[{"role":"user","content":"hi"}]}'\n` +
+        `4) 如果 API 不支持 CORS，可以改为通过 BiliNote 后端代理`;
+    } else if (e.message.includes('NetworkError')) {
+      hint = '\n\n💡 网络连接失败，请检查网络';
+    }
+    loadingMsg.content = `❌ 网络错误: ${e.message}${hint}`;
     isStreaming = false;
   }
 
