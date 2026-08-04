@@ -1,0 +1,9 @@
+{
+  "base_url": "https://token.sensenova.cn/v1",
+  "api_key": "sk-capZuTqIBgSquRvnCXDgLBaWGIBggRxw",
+  "model": "sensenova-6.7-flash-lite",
+  "max_history": 50,
+  "max_single_length": 5000,
+  "storage_limit_mb": 5,
+  "warning_threshold": 70
+}
