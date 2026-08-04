@@ -191,8 +191,99 @@ cd "F:\OB_vault\ai-creator-studio"
 - [x] 桥接脚本：提交 → 轮询 → 取 Markdown → 写入 Obsidian
 - [x] 桥接脚本：提取视频真实标题（非 URL）
 - [x] 桥接脚本：平台标签 + 全局标签
-- [ ] 灵感库：接入大模型 API
-- [ ] 灵感库：历史讨论保存（localStorage）
-- [ ] 灵感库：话题模板推荐
-- [ ] 灵感库：从收集箱导入灵感
-- [ ] 灵感库：导出到 Obsidian
+- [x] 灵感库：接入大模型 API（通过 BiliNote 后端代理，绕过 CORS）
+- [x] 灵感库：历史讨论保存（localStorage）
+- [x] 灵感库：话题模板推荐
+- [x] 灵感库：从收集箱导入灵感
+- [x] 灵感库：导出到 Obsidian
+- [ ] 灵感库：GitHub Pages 部署
+- [ ] 灵感库：移动端 PWA 适配优化
+- [ ] 创作台：工作流状态持久化
+
+---
+
+## 灵感库配置指南
+
+### 原理
+
+灵感库通过 BiliNote 后端做 API 代理，绕过浏览器 CORS 限制：
+
+```
+前端 (http://127.0.0.1:5500)
+  → POST /api/inspire/chat  （同源，无 CORS 问题）
+    → BiliNote 后端转发到 SenseNova API
+      → 返回结果给前端
+```
+
+### 后端配置（一次性）
+
+在 BiliNote 后端新增代理端点（详见 `INSPIRE_BACKEND_SETUP.md`）：
+
+1. 新建 `E:\Github_projet\BiliNote\backend\app\routers\inspire.py`
+2. 在 `app/__init__.py` 的 `create_app()` 中加一行：
+   ```python
+   from .routers import inspire
+   app.include_router(inspire.router, prefix="/api")
+   ```
+3. 重启 BiliNote 后端
+
+### 前端配置
+
+打开灵感库 → 点击右上角 ⚙️ 配置：
+
+| 字段 | 值 |
+|------|------|
+| Base URL | `https://token.sensenova.cn/v1` |
+| API Key | `sk-capZuTqIBgSquRvnCXDgLBaWGIBggRxw` |
+| 模型 | `sensenova-6.7-flash-lite` |
+
+### 验证代理端点
+
+```powershell
+curl -X POST "http://127.0.0.1:8483/api/inspire/chat" `
+  -H "Content-Type: application/json" `
+  -d '{
+    "messages": [{"role":"user","content":"hello"}],
+    "base_url": "https://token.sensenova.cn/v1",
+    "api_key": "sk-capZuTqIBgSquRvnCXDgLBaWGIBggRxw",
+    "model": "sensenova-6.7-flash-lite"
+  }'
+```
+
+返回 `{"content":"...","error":null}` 说明代理端点正常。
+
+---
+
+## 部署指南
+
+### 方案 A：GitHub Pages（推荐）
+
+适合手机随时访问，不需要同 WiFi。
+
+```powershell
+# 1. 推代码到 GitHub
+cd "F:\OB_vault\ai-creator-studio"
+git push origin main
+
+# 2. 在 GitHub 仓库 Settings → Pages
+#    Source: Deploy from a branch
+#    Branch: main / (root)
+#    保存后访问 https://<username>.github.io/ai-creator-studio/
+```
+
+**注意**：GitHub Pages 是静态托管，需要 BiliNote 后端在本地一直运行（8483 端口），灵感库才能对话。
+
+### 方案 B：本地 HTTP 服务
+
+```powershell
+# 双击 start_frontend.bat 或运行：
+cd "F:\OB_vault\ai-creator-studio"
+python -m http.server 8000
+# 访问 http://localhost:8000
+```
+
+### 方案 C：Live Server（VS Code）
+
+1. 安装 Live Server 扩展
+2. 右键 `index.html` → Open with Live Server
+3. 访问 `http://127.0.0.1:5500/ai-creator-studio/index.html`
